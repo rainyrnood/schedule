@@ -19,13 +19,14 @@
   cursor: pointer;
 }
 .fc .fc-daygrid-event { margin: 1px 2px; }
+.fc .fc-ev-time { font-size: 10px; font-weight: 500; opacity: 0.85; margin-right: 2px; }
 
 /* Calendar day hours label */
 .fc .fc-day-hours {
   font-size: 10px;
   font-weight: 700;
-  color: var(--primary);
-  background: #eef2ff;
+  color: #1f2937;
+  background: #f1f5f9;
   border-radius: 4px;
   padding: 1px 5px;
   display: inline-block;
@@ -166,11 +167,11 @@
 .memo-panel.memo-drop-active {
   outline: 3px dashed var(--primary-light);
   outline-offset: -3px;
-  background: #eef2ff;
+  background: #ecfdf5;
   transition: all 0.2s;
 }
 .memo-panel.memo-drop-active .memo-hint {
-  background: #e0e7ff;
+  background: #d1fae5;
   color: var(--primary);
   font-weight: 600;
 }
@@ -202,7 +203,7 @@
   line-height: 1;
 }
 .week-fold-btn:hover {
-  background: #eef2ff;
+  background: #ecfdf5;
   border-color: var(--primary);
   color: var(--primary);
 }
@@ -257,7 +258,7 @@
 
 /* Calendar cell hover during memo drag */
 .fc-daygrid-day.memo-drag-hover {
-  background: #eef2ff !important;
+  background: #ecfdf5 !important;
   outline: 2px dashed var(--primary-light);
   outline-offset: -2px;
 }

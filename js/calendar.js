@@ -35,7 +35,7 @@ function renderCalendar() {
         backgroundColor: slot.done ? '#94a3b8' : priorityColor(slot.priority),
         borderColor: slot.done ? '#94a3b8' : priorityColor(slot.priority),
         textColor: slot.done ? '#ffffff' : priorityTextColor(slot.priority),
-        extendedProps: { task: slot, startTime: slot.startTime, endTime: slot.endTime },
+        extendedProps: { task: slot, startTime: slot.startTime, endTime: slot.endTime, timeLabel: formatHourShort(slot.startHour) + '~' + formatHourShort(slot.endHour) },
       });
     }
     // 시간 미지정 Task는 시간 표시 없이, 아래쪽에 배치 (우선순위 순으로 정렬)
@@ -78,6 +78,22 @@ function renderCalendar() {
     droppable: true,
     dragRevertDuration: 0,
     events,
+    // 이벤트 칩에서 시간 부분만 작게 표시 (시간 폰트 축소)
+    eventDidMount(arg) {
+      const ep = arg.event.extendedProps || {};
+      if (!ep.timeLabel) return;
+      const titleEl = arg.el.querySelector('.fc-event-title');
+      if (!titleEl) return;
+      const full = titleEl.textContent;
+      if (!full.startsWith(ep.timeLabel)) return;
+      const rest = full.slice(ep.timeLabel.length);
+      titleEl.textContent = '';
+      const timeEl = document.createElement('span');
+      timeEl.className = 'fc-ev-time';
+      timeEl.textContent = ep.timeLabel;
+      titleEl.appendChild(timeEl);
+      titleEl.appendChild(document.createTextNode(rest));
+    },
     eventDrop(info) {
       const tasks = loadTasks();
       if (info.event.extendedProps.isDueMarker) {

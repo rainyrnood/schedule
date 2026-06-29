@@ -27,9 +27,9 @@
 }
 .task-item:hover { background: #f8fafc; }
 .task-item:active { cursor: grabbing; }
-.task-item.dragging { opacity: 0.4; background: #e0e7ff; }
+.task-item.dragging { opacity: 0.4; background: #d1fae5; }
 .task-item:last-child { border-bottom: none; }
-.task-item.selected { background: #eef2ff; }
+.task-item.selected { background: #ecfdf5; }
 
 .task-priority {
   width: 4px;
@@ -108,7 +108,7 @@
 /* Batch action bar */
 .batch-bar {
   padding: 12px 20px;
-  background: #eef2ff;
+  background: #ecfdf5;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
