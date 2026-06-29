@@ -1,0 +1,277 @@
+/* Calendar View */
+.calendar-container {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+}
+.fc { font-size: 13px; }
+.fc .fc-toolbar-title { font-size: 18px !important; font-weight: 700; }
+.fc .fc-button-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+.fc .fc-event {
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fc .fc-daygrid-event { margin: 1px 2px; }
+
+/* Calendar day hours label */
+.fc .fc-day-hours {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+  background: #eef2ff;
+  border-radius: 4px;
+  padding: 1px 5px;
+  display: inline-block;
+  margin: 2px;
+}
+.fc .fc-day-hours.full {
+  color: var(--danger);
+  background: #fef2f2;
+}
+
+/* Calendar + Memo Layout */
+.calendar-with-memo {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.calendar-with-memo .calendar-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Memo Panel */
+.memo-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+}
+.memo-panel-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.memo-panel-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+.memo-input-area {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.memo-input-area .form-control {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.memo-task-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.memo-empty {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 12px;
+  padding: 24px 12px;
+  line-height: 1.6;
+}
+.memo-task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  cursor: grab;
+  transition: all 0.15s;
+  background: white;
+}
+.memo-task-item:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow);
+}
+.memo-task-item:active {
+  cursor: grabbing;
+}
+.memo-task-item.memo-done {
+  opacity: 0.5;
+}
+.memo-task-priority {
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.memo-task-info {
+  flex: 1;
+  min-width: 0;
+}
+.memo-task-name {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.memo-task-meta {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 1px;
+}
+.memo-task-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 2px;
+}
+.memo-task-actions .btn {
+  padding: 2px 6px;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.memo-task-actions .memo-move-btn {
+  font-size: 10px;
+  padding: 2px 4px;
+}
+.memo-task-item:hover .memo-task-actions .btn {
+  opacity: 1;
+}
+.memo-hint {
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--text-light);
+  background: #fffbeb;
+  border-top: 1px solid #fef3c7;
+  text-align: center;
+}
+
+/* Memo Panel Drop Zone Highlight */
+.memo-panel.memo-drop-active {
+  outline: 3px dashed var(--primary-light);
+  outline-offset: -3px;
+  background: #eef2ff;
+  transition: all 0.2s;
+}
+.memo-panel.memo-drop-active .memo-hint {
+  background: #e0e7ff;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* Memo drag reorder indicator */
+.memo-task-item.memo-drop-above {
+  border-top: 3px solid var(--primary);
+}
+
+/* Week Fold Button */
+.week-fold-btn {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+.week-fold-btn:hover {
+  background: #eef2ff;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Collapsed week row */
+.fc-daygrid-day.week-collapsed {
+  height: 28px !important;
+  min-height: 28px !important;
+  max-height: 28px !important;
+  overflow: hidden;
+}
+.fc-daygrid-day.week-collapsed .fc-daygrid-day-frame {
+  min-height: 28px !important;
+  height: 28px !important;
+  display: flex;
+  align-items: center;
+}
+.fc-daygrid-day.week-collapsed .fc-daygrid-day-top {
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+.fc-daygrid-day.week-collapsed .fc-daygrid-day-number {
+  font-size: 11px;
+}
+.fc-daygrid-day.week-collapsed .fc-day-hours {
+  position: static;
+  margin-left: auto;
+  margin-right: 4px;
+  font-size: 9px;
+  padding: 0 4px;
+  line-height: 28px;
+  flex-shrink: 0;
+}
+
+/* Custom Memo Drag Ghost */
+.memo-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.9;
+  transform: none;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  background: white;
+  border: 2px solid var(--primary);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  will-change: left, top;
+}
+
+/* Calendar cell hover during memo drag */
+.fc-daygrid-day.memo-drag-hover {
+  background: #eef2ff !important;
+  outline: 2px dashed var(--primary-light);
+  outline-offset: -2px;
+}
+
+/* Calendar Fold Controls */
+.calendar-fold-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  justify-content: flex-end;
+}
+
+/* Hide FullCalendar Draggable mirror during custom drag */
+.fc-event-mirror,
+.fc .fc-event-mirror {
+  display: none !important;
+}

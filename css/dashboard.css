@@ -1,0 +1,169 @@
+/* Dashboard Stats */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.stat-card .label { font-size: 13px; color: var(--text-light); margin-bottom: 4px; }
+.stat-card .value { font-size: 28px; font-weight: 700; }
+.stat-card .sub { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+
+/* Dashboard Timeline */
+.timeline {
+  padding: 16px 20px;
+}
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.timeline-bar-bg {
+  background: #f1f5f9;
+  border-radius: 8px;
+  height: 32px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.timeline-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  white-space: nowrap;
+}
+.timeline-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+.timeline-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.timeline-slot-time {
+  width: 110px;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.timeline-slot-bar {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.timeline-slot-dur {
+  font-size: 11px;
+  color: var(--text-light);
+  flex-shrink: 0;
+  width: 40px;
+  text-align: right;
+}
+
+/* Lunch Settings */
+.lunch-settings {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+.lunch-settings select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  background: white;
+}
+.lunch-settings select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.timeline-lunch-slot .timeline-slot-bar {
+  background: repeating-linear-gradient(
+    45deg,
+    #f1f5f9,
+    #f1f5f9 4px,
+    #e2e8f0 4px,
+    #e2e8f0 8px
+  ) !important;
+  color: var(--text-light) !important;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Real-time Status Panel */
+.realtime-status-panel {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.realtime-status-empty {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 13px;
+  padding: 8px;
+}
+.realtime-status-grid {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.realtime-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.realtime-label {
+  font-size: 11px;
+  color: var(--text-light);
+  font-weight: 600;
+}
+.realtime-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.realtime-value.overtime {
+  color: var(--danger);
+}
+.realtime-value.ok {
+  color: var(--success);
+}
+.realtime-overtime {
+  background: #fef2f2;
+  padding: 4px 10px;
+  border-radius: 8px;
+}

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일정관리</title>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/tasklist.css">
+<link rel="stylesheet" href="css/calendar.css">
+<link rel="stylesheet" href="css/chart.css">
+<link rel="stylesheet" href="css/weekly.css">
+</head>
+<body>
+
+<div class="header">
+  <h1>일정관리</h1>
+  <div class="header-actions">
+    <button class="btn btn-white" onclick="autoSchedule()">자동 배치</button>
+    <button class="btn btn-white" onclick="openModal()">+ 새 Task</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-view="dashboard">일정관리</button>
+  <button class="tab" data-view="calendar">캘린더</button>
+  <button class="tab" data-view="tasklist">Task 목록</button>
+  <button class="tab" data-view="chart">차트</button>
+  <button class="tab" data-view="weekly">주간 요약</button>
+</div>
+
+<div class="main">
+  <!-- Dashboard View -->
+  <div class="view-panel active" id="view-dashboard">
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <div class="label">전체 Task</div>
+        <div class="value" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">오늘 할 일</div>
+        <div class="value" id="stat-today">0</div>
+        <div class="sub" id="stat-today-hours"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">오늘 예상 업무시간</div>
+        <div class="value" id="stat-work-hours">0h</div>
+        <div class="sub" id="stat-work-range"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">기한 초과</div>
+        <div class="value" id="stat-overdue" style="color:var(--danger)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">완료</div>
+        <div class="value" id="stat-done" style="color:var(--success)">0</div>
+      </div>
+    </div>
+
+    <div class="task-section">
+      <div class="task-section-header">
+        <h3>오늘의 업무 타임라인</h3>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="lunch-settings">
+            <span>점심:</span>
+            <select id="lunch-start"></select>
+            <span>~</span>
+            <select id="lunch-end"></select>
+          </div>
+          <span style="font-size:12px;color:var(--text-light)" id="today-summary"></span>
+        </div>
+      </div>
+      <div class="timeline" id="today-timeline"></div>
+    </div>
+
+    <div class="task-section">
+      <div class="task-section-header">
+        <h3>오늘의 Task</h3>
+      </div>
+      <ul class="task-list" id="today-tasks"></ul>
+    </div>
+
+    <div class="task-section">
+      <div class="task-section-header">
+        <h3>기한 임박 / 초과</h3>
+      </div>
+      <ul class="task-list" id="urgent-tasks"></ul>
+    </div>
+
+    <!-- Data Management -->
+    <div class="data-bar">
+      <span class="data-bar-label">데이터 관리</span>
+      <button class="btn btn-ghost btn-sm" onclick="exportBackup()">백업</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()">불러오기</button>
+      <input type="file" id="import-file" accept=".json" onchange="importBackup(event)">
+      <button class="btn btn-ghost btn-sm" onclick="exportCalendarICS()" title="Outlook/Google Calendar/Apple Calendar로 내보내기">.ics 내보내기</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-ics-file').click()" title="Teams/Outlook .ics 파일에서 일정 가져오기">.ics 가져오기</button>
+      <input type="file" id="import-ics-file" accept=".ics" onchange="importICS(event)">
+      <button class="btn btn-danger btn-sm" onclick="resetAll()">달력 초기화</button>
+    </div>
+  </div>
+
+  <!-- Calendar View -->
+  <div class="view-panel" id="view-calendar">
+    <!-- 실시간 상태 패널 -->
+    <div class="realtime-status-panel" id="calendar-realtime-status"></div>
+
+    <div class="calendar-fold-controls">
+      <button class="btn btn-ghost btn-sm" id="btn-fold-all" onclick="toggleFoldAllExceptThisWeek()">이번 주 제외 모두 접기</button>
+    </div>
+
+    <div class="calendar-with-memo">
+      <div class="calendar-container">
+        <div id="calendar"></div>
+      </div>
+      <!-- 메모/미배정 Task 패널 -->
+      <div class="memo-panel">
+        <div class="memo-panel-header">
+          <h4>메모 / 미배정 Task</h4>
+        </div>
+        <div class="memo-input-area">
+          <input type="text" class="form-control" id="memo-task-input" placeholder="빠른 메모 추가...">
+          <button class="btn btn-primary btn-sm" onclick="addMemoTask()">추가</button>
+        </div>
+        <div class="memo-task-list" id="memo-task-list"></div>
+        <div class="memo-hint">메모를 캘린더 날짜로 드래그하여 배정할 수 있습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task List View -->
+  <div class="view-panel" id="view-tasklist">
+    <div class="filter-bar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select class="form-control" style="width:auto" id="filter-priority">
+          <option value="">모든 우선순위</option>
+          <option value="high">높음</option>
+          <option value="medium">보통</option>
+          <option value="low">낮음</option>
+          <option value="none">없음</option>
+        </select>
+        <select class="form-control" style="width:auto" id="filter-status">
+          <option value="active">진행 중</option>
+          <option value="done">완료</option>
+          <option value="">전체</option>
+        </select>
+        <select class="form-control" style="width:auto" id="filter-category1">
+          <option value="">모든 대분류</option>
+        </select>
+        <select class="form-control" style="width:auto" id="filter-category2">
+          <option value="">모든 중분류</option>
+        </select>
+        <select class="form-control" style="width:auto" id="filter-category3">
+          <option value="">모든 소분류</option>
+        </select>
+        <div class="sort-controls">
+          <span style="font-size:12px;color:var(--text-light);margin-right:2px;">정렬:</span>
+          <button class="sort-btn active" data-sort="priority" data-dir="desc" onclick="setSort(this)">우선순위</button>
+          <button class="sort-btn" data-sort="name" data-dir="asc" onclick="setSort(this)">이름</button>
+          <button class="sort-btn" data-sort="dueDate" data-dir="asc" onclick="setSort(this)">마감일</button>
+          <button class="sort-btn" data-sort="scheduledDate" data-dir="asc" onclick="setSort(this)">배정일</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()">+ 새 Task</button>
+    </div>
+    <!-- Batch action bar -->
+    <div class="batch-bar hidden" id="batch-bar">
+      <span class="batch-bar-info" id="batch-info">0개 선택됨</span>
+      <div class="batch-bar-actions">
+        <button class="btn btn-success btn-sm" onclick="batchComplete()">선택 완료</button>
+        <button class="btn btn-warning btn-sm" onclick="batchUncomplete()">완료 해제</button>
+        <button class="btn btn-ghost btn-sm" onclick="batchClear()">선택 해제</button>
+      </div>
+    </div>
+    <div class="task-section" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;" id="all-tasks-section">
+      <ul class="task-list" id="all-tasks"></ul>
+    </div>
+  </div>
+
+  <!-- Chart View (Interactive) -->
+  <div class="view-panel" id="view-chart">
+    <div class="chart-container">
+      <h3>카테고리별 Task 차트</h3>
+      <div class="chart-controls">
+        <select class="form-control" style="width:auto" id="chart-status-filter">
+          <option value="active">진행 중</option>
+          <option value="done">완료</option>
+          <option value="">전체</option>
+        </select>
+        <div class="chart-view-toggle">
+          <button class="chart-view-btn active" data-chart-mode="interactive" onclick="switchChartMode('interactive')">인터랙티브</button>
+          <button class="chart-view-btn" data-chart-mode="mermaid" onclick="switchChartMode('mermaid')">Mermaid</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="renderChart()">새로고침</button>
+      </div>
+      <div id="chart-summary" class="chart-summary" style="display:none;"></div>
+      <div id="chart-area"></div>
+    </div>
+  </div>
+
+  <!-- Weekly Summary View -->
+  <div class="view-panel" id="view-weekly">
+    <div class="weekly-summary-container">
+      <div class="weekly-header">
+        <button class="btn btn-ghost" onclick="changeWeek(-1)">&larr; 이전 주</button>
+        <h3 id="weekly-title">주간 요약</h3>
+        <button class="btn btn-ghost" onclick="changeWeek(1)">다음 주 &rarr;</button>
+      </div>
+      <div class="weekly-actions">
+        <button class="btn btn-primary" onclick="copyWeeklySummary()">클립보드에 복사</button>
+        <span class="weekly-copy-hint" id="weekly-copy-hint"></span>
+      </div>
+      <div id="weekly-content" class="weekly-content"></div>
+      <textarea id="weekly-raw-text" class="weekly-raw-text" readonly></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">새 Task 만들기</h2>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="task-id">
+      <div class="form-group">
+        <label>제목 *</label>
+        <input type="text" class="form-control" id="task-name" placeholder="Task 이름을 입력하세요">
+      </div>
+      <div class="form-group">
+        <label>설명</label>
+        <textarea class="form-control" id="task-desc" placeholder="상세 내용 (선택사항)"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>우선순위</label>
+          <select class="form-control" id="task-priority">
+            <option value="high">높음</option>
+            <option value="medium" selected>보통</option>
+            <option value="low">낮음</option>
+            <option value="none">없음</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>예상 시간</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select class="form-control" id="task-duration-hour" style="width:70px"></select>
+            <span style="font-size:13px;font-weight:600;">시간</span>
+            <select class="form-control" id="task-duration-min" style="width:70px"></select>
+            <span style="font-size:13px;font-weight:600;">분</span>
+          </div>
+        </div>
+      </div>
+      <!-- 분류 (선택사항) -->
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>대분류</label>
+          <input type="text" class="form-control" id="task-category1" list="dl-category1" placeholder="대분류" autocomplete="off">
+          <datalist id="dl-category1"></datalist>
+        </div>
+        <div class="form-group">
+          <label>중분류</label>
+          <input type="text" class="form-control" id="task-category2" list="dl-category2" placeholder="중분류" autocomplete="off">
+          <datalist id="dl-category2"></datalist>
+        </div>
+        <div class="form-group">
+          <label>소분류</label>
+          <input type="text" class="form-control" id="task-category3" list="dl-category3" placeholder="소분류" autocomplete="off">
+          <datalist id="dl-category3"></datalist>
+        </div>
+      </div>
+      <!-- 배정일이 마감일보다 위에 위치 -->
+      <div class="form-group">
+        <label>배정일 (Scheduled)</label>
+        <div class="date-time-group">
+          <input type="date" class="form-control" id="task-scheduled">
+          <div class="time-picker" id="tp-scheduled">
+            <select class="tp-period"></select>
+            <select class="tp-hour"></select>
+            <span class="tp-sep">:</span>
+            <select class="tp-minute"></select>
+            <button type="button" class="tp-clear" title="시간 초기화">&times;</button>
+          </div>
+        </div>
+        <div class="time-optional">시간 지정은 선택사항입니다 (5분 단위)</div>
+      </div>
+      <div class="form-group">
+        <label>마감일 (Due Date)</label>
+        <div class="date-time-group">
+          <input type="date" class="form-control" id="task-due">
+          <div class="time-picker" id="tp-due">
+            <select class="tp-period"></select>
+            <select class="tp-hour"></select>
+            <span class="tp-sep">:</span>
+            <select class="tp-minute"></select>
+            <button type="button" class="tp-clear" title="시간 초기화">&times;</button>
+          </div>
+        </div>
+        <div class="time-optional">시간 지정은 선택사항입니다 (5분 단위) / 메모 Task는 마감일 없이 저장 가능</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-left">
+        <button class="btn btn-danger" id="btn-delete" style="display:none" onclick="deleteTask()">삭제</button>
+      </div>
+      <div class="modal-footer-right">
+        <button class="btn btn-success" id="btn-toggle-done" style="display:none" onclick="toggleDoneFromModal()">완료</button>
+        <button class="btn btn-ghost" onclick="closeModal()">취소</button>
+        <button class="btn btn-primary" onclick="saveTask()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Task Detail Popup -->
+<div class="chart-task-popup" id="chart-task-popup">
+  <div class="chart-task-popup-header">
+    <h4 id="chart-popup-title"></h4>
+    <button class="chart-task-popup-close" onclick="closeChartPopup()">&times;</button>
+  </div>
+  <div class="chart-task-popup-body" id="chart-popup-body"></div>
+  <div class="chart-task-popup-actions" id="chart-popup-actions"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ics.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/tasklist.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/chart-common.js"></script>
+<script src="js/chart-interactive.js"></script>
+<script src="js/chart-mermaid.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

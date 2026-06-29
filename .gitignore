@@ -1,0 +1,10 @@
+# OS / editor
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+
+# 로컬 전용 문서
+progress.md
+context.md
+plan.md
