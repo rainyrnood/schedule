@@ -22,17 +22,18 @@
   </div>
 </div>
 
-<div class="tabs">
-  <button class="tab active" data-view="dashboard">일정관리</button>
-  <button class="tab" data-view="calendar">캘린더</button>
-  <button class="tab" data-view="tasklist">Task 목록</button>
-  <button class="tab" data-view="chart">차트</button>
+<div class="tabs collapsed" id="tabs">
+  <button class="tab active" data-view="calendar">캘린더</button>
   <button class="tab" data-view="weekly">주간 요약</button>
+  <button class="tab tab-extra" data-view="dashboard">일정관리</button>
+  <button class="tab tab-extra" data-view="tasklist">Task 목록</button>
+  <button class="tab tab-extra" data-view="chart">차트</button>
+  <button class="tab-more" id="btn-tab-more" onclick="toggleExtraTabs()">더보기 &#9656;</button>
 </div>
 
 <div class="main">
   <!-- Dashboard View -->
-  <div class="view-panel active" id="view-dashboard">
+  <div class="view-panel" id="view-dashboard">
     <div class="dashboard-stats">
       <div class="stat-card">
         <div class="label">전체 Task</div>
@@ -102,7 +103,7 @@
   </div>
 
   <!-- Calendar View -->
-  <div class="view-panel" id="view-calendar">
+  <div class="view-panel active" id="view-calendar">
     <!-- 실시간 상태 패널 -->
     <div class="realtime-status-panel" id="calendar-realtime-status"></div>
 

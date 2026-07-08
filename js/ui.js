@@ -452,6 +452,19 @@ function addMemoTask() {
   renderAll();
 }
 
+// ─── Extra Tabs (일정관리·Task 목록·차트 접기/펼치기) ───
+function toggleExtraTabs() {
+  const tabs = document.getElementById('tabs');
+  const btn = document.getElementById('btn-tab-more');
+  const collapsed = tabs.classList.toggle('collapsed');
+  btn.innerHTML = collapsed ? '더보기 &#9656;' : '접기 &#9666;';
+  if (collapsed) {
+    // 숨김 탭 화면을 보던 중 접으면 캘린더로 전환
+    const active = document.querySelector('.tab.active');
+    if (active && active.classList.contains('tab-extra')) switchView('calendar');
+  }
+}
+
 // ─── Views ───
 function switchView(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === name));
