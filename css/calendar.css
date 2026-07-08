@@ -22,6 +22,8 @@
 .fc .fc-ev-time { font-size: 10px; font-weight: 500; opacity: 0.85; margin-right: 2px; }
 
 /* Calendar day hours label */
+/* 시간 배지 전용 하단 여백: Task 칩이 배지(bottom-right 절대좌표)를 덮지 않도록 확보. 접힌 주(28px 고정)는 제외 */
+.fc .fc-daygrid-day:not(.week-collapsed) .fc-daygrid-day-frame { padding-bottom: 20px; }
 .fc .fc-day-hours {
   font-size: 10px;
   font-weight: 700;
