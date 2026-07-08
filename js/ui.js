@@ -219,6 +219,73 @@ function setDurationValue(decimalHours) {
   document.getElementById('task-duration-min').value = String(roundedMin >= 60 ? 55 : roundedMin);
 }
 
+// ─── Description Checklist ───
+// '[ ] 항목' / '[x] 항목' 형식의 줄만 체크리스트로 인식 (GitHub 방식)
+const DESC_CHECK_RE = /^(\s*)\[( |x|X)\]\s?(.*)$/;
+
+function descHasChecklist(text) {
+  return (text || '').split('\n').some(line => DESC_CHECK_RE.test(line));
+}
+
+// mode: 'edit'(textarea) | 'check'(체크리스트 뷰)
+function setDescMode(mode) {
+  const ta = document.getElementById('task-desc');
+  const list = document.getElementById('desc-checklist');
+  const btn = document.getElementById('btn-desc-mode');
+  if (mode === 'check') {
+    renderDescChecklist();
+    ta.style.display = 'none';
+    list.style.display = 'block';
+    btn.textContent = '편집';
+  } else {
+    ta.style.display = '';
+    list.style.display = 'none';
+    btn.textContent = '체크리스트';
+  }
+  btn.dataset.mode = mode;
+}
+
+function toggleDescMode() {
+  const btn = document.getElementById('btn-desc-mode');
+  setDescMode(btn.dataset.mode === 'check' ? 'edit' : 'check');
+}
+
+function renderDescChecklist() {
+  const ta = document.getElementById('task-desc');
+  const list = document.getElementById('desc-checklist');
+  if (!ta.value.trim()) {
+    list.innerHTML = '<div class="desc-check-empty">내용이 없습니다. 편집 모드에서 \'[ ] 항목\' 형식으로 입력하면 체크리스트가 됩니다.</div>';
+    return;
+  }
+  list.innerHTML = ta.value.split('\n').map((line, i) => {
+    const m = line.match(DESC_CHECK_RE);
+    if (m) {
+      const checked = m[2].toLowerCase() === 'x';
+      return '<div class="desc-check-item' + (checked ? ' checked' : '') + '" data-line="' + i + '">' +
+        '<input type="checkbox"' + (checked ? ' checked' : '') + '>' +
+        '<span>' + escapeHtml(m[3]) + '</span></div>';
+    }
+    return '<div class="desc-check-text">' + (escapeHtml(line) || '&nbsp;') + '</div>';
+  }).join('');
+}
+
+// 체크 토글: textarea 값의 해당 줄에서 [ ] ↔ [x] 교체 (저장 버튼으로 확정)
+function toggleDescLine(lineIdx) {
+  const ta = document.getElementById('task-desc');
+  const lines = ta.value.split('\n');
+  const m = (lines[lineIdx] || '').match(DESC_CHECK_RE);
+  if (!m) return;
+  const checked = m[2].toLowerCase() === 'x';
+  lines[lineIdx] = m[1] + '[' + (checked ? ' ' : 'x') + '] ' + m[3];
+  ta.value = lines.join('\n');
+  renderDescChecklist();
+}
+
+document.getElementById('desc-checklist').addEventListener('click', function(e) {
+  const item = e.target.closest('.desc-check-item');
+  if (item) toggleDescLine(parseInt(item.dataset.line));
+});
+
 // ─── Modal ───
 // defaults: { scheduledDate, dueDate } - optional overrides for new task creation
 function openModal(taskId, defaults) {
@@ -238,6 +305,7 @@ function openModal(taskId, defaults) {
     document.getElementById('task-id').value = task.id;
     document.getElementById('task-name').value = task.name;
     document.getElementById('task-desc').value = task.description || '';
+    setDescMode(descHasChecklist(task.description) ? 'check' : 'edit');
     document.getElementById('task-priority').value = task.priority;
     setDurationValue(task.duration || 1);
     document.getElementById('task-category1').value = task.category1 || '';
@@ -260,6 +328,7 @@ function openModal(taskId, defaults) {
     document.getElementById('task-id').value = '';
     document.getElementById('task-name').value = '';
     document.getElementById('task-desc').value = '';
+    setDescMode('edit');
     document.getElementById('task-priority').value = 'medium';
     setDurationValue(1);
     document.getElementById('task-category1').value = '';

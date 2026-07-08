@@ -170,6 +170,36 @@ body {
 select.form-control { cursor: pointer; }
 textarea.form-control { resize: vertical; min-height: 60px; }
 
+/* 설명 체크리스트 */
+.desc-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.desc-label-row label { margin-bottom: 0; }
+.btn-desc-mode {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-desc-mode:hover { border-color: var(--primary); color: var(--primary); }
+.desc-checklist {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  min-height: 60px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.desc-check-item { display: flex; align-items: flex-start; gap: 8px; padding: 2px 0; cursor: pointer; }
+.desc-check-item input { margin-top: 3px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+.desc-check-item.checked span { text-decoration: line-through; color: var(--text-light); }
+.desc-check-text { padding: 2px 0; white-space: pre-wrap; }
+.desc-check-empty { color: var(--text-light); font-size: 13px; }
+
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 

@@ -231,8 +231,12 @@
         <input type="text" class="form-control" id="task-name" placeholder="Task 이름을 입력하세요">
       </div>
       <div class="form-group">
-        <label>설명</label>
-        <textarea class="form-control" id="task-desc" placeholder="상세 내용 (선택사항)"></textarea>
+        <div class="desc-label-row">
+          <label>설명</label>
+          <button type="button" class="btn-desc-mode" id="btn-desc-mode" data-mode="edit" onclick="toggleDescMode()">체크리스트</button>
+        </div>
+        <textarea class="form-control" id="task-desc" placeholder="상세 내용 (선택사항) — '[ ] 항목'으로 쓴 줄은 체크리스트가 됩니다"></textarea>
+        <div class="desc-checklist" id="desc-checklist" style="display:none"></div>
       </div>
       <div class="form-row">
         <div class="form-group">
