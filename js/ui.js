@@ -286,6 +286,53 @@ document.getElementById('desc-checklist').addEventListener('click', function(e) 
   if (item) toggleDescLine(parseInt(item.dataset.line));
 });
 
+// ─── 반복 섹션 (모달) ───
+function getSelectedRecurringDays() {
+  return [...document.querySelectorAll('#recurring-days input:checked')].map(cb => parseInt(cb.value));
+}
+
+function setRecurringDays(days) {
+  document.querySelectorAll('#recurring-days input').forEach(cb => {
+    cb.checked = days.includes(parseInt(cb.value));
+  });
+  updateRecurringEndVisibility();
+}
+
+function setRecurringPreset(preset) {
+  if (preset === 'weekday') setRecurringDays([1, 2, 3, 4, 5]);
+  else if (preset === 'daily') setRecurringDays([0, 1, 2, 3, 4, 5, 6]);
+  else setRecurringDays([]);
+}
+
+function updateRecurringEndVisibility() {
+  const any = getSelectedRecurringDays().length > 0;
+  document.getElementById('recurring-end-row').style.display = any ? 'flex' : 'none';
+  document.getElementById('recurring-hint').style.display = any ? 'block' : 'none';
+}
+
+document.querySelectorAll('#recurring-days input').forEach(cb => {
+  cb.addEventListener('change', updateRecurringEndVisibility);
+});
+
+// 모달의 반복 관련 요소 상태 설정
+// mode: 'new'(요일 선택 가능) | 'task'(숨김) | 'instance'(안내 표시) | 'rule'(요일 선택 + 마감일 숨김)
+function setModalRecurringState(mode) {
+  const group = document.getElementById('recurring-group');
+  const note = document.getElementById('recurring-instance-note');
+  const dueGroup = document.getElementById('due-group');
+  const schedLabel = document.getElementById('label-scheduled');
+
+  group.style.display = (mode === 'new' || mode === 'rule') ? '' : 'none';
+  note.style.display = mode === 'instance' ? 'flex' : 'none';
+  dueGroup.style.display = mode === 'rule' ? 'none' : '';
+  schedLabel.textContent = mode === 'rule' ? '반복 시작일' : '배정일 (Scheduled)';
+  if (mode === 'new') {
+    setRecurringDays([]);
+    document.getElementById('recurring-end').value = '';
+  }
+  if (mode !== 'rule') document.getElementById('rule-id').value = '';
+}
+
 // ─── Modal ───
 // defaults: { scheduledDate, dueDate } - optional overrides for new task creation
 function openModal(taskId, defaults) {
@@ -315,6 +362,7 @@ function openModal(taskId, defaults) {
     setTimePickerValue('tp-scheduled', task.scheduledTime || '');
     document.getElementById('task-due').value = task.dueDate || '';
     setTimePickerValue('tp-due', task.dueTime || '');
+    setModalRecurringState(task.recurringId ? 'instance' : 'task');
 
     btnDone.style.display = 'inline-flex';
     if (task.done) {
@@ -341,8 +389,43 @@ function openModal(taskId, defaults) {
     setTimePickerValue('tp-scheduled', '');
     document.getElementById('task-due').value = dueDate;
     setTimePickerValue('tp-due', '');
+    setModalRecurringState('new');
     btnDone.style.display = 'none';
   }
+
+  modal.classList.add('active');
+  setTimeout(() => document.getElementById('task-name').focus(), 100);
+}
+
+// ─── 반복 규칙 수정 (Task 모달 재사용) ───
+function openRuleModal(ruleId) {
+  const rule = loadRecurringRules().find(r => r.id === ruleId);
+  if (!rule) return;
+  const modal = document.getElementById('task-modal');
+
+  document.getElementById('modal-title').textContent = '반복 일정 수정';
+  document.getElementById('btn-delete').style.display = 'inline-flex';
+  document.getElementById('btn-toggle-done').style.display = 'none';
+  refreshCategoryDatalists();
+
+  document.getElementById('task-id').value = '';
+  document.getElementById('rule-id').value = rule.id;
+  document.getElementById('task-name').value = rule.name;
+  document.getElementById('task-desc').value = rule.description || '';
+  setDescMode(descHasChecklist(rule.description) ? 'check' : 'edit');
+  document.getElementById('task-priority').value = rule.priority || 'medium';
+  setDurationValue(rule.duration || 1);
+  document.getElementById('task-category1').value = rule.category1 || '';
+  document.getElementById('task-category2').value = rule.category2 || '';
+  document.getElementById('task-category3').value = rule.category3 || '';
+  document.getElementById('task-scheduled').value = rule.startDate || todayStr();
+  setTimePickerValue('tp-scheduled', rule.time || '');
+  document.getElementById('task-due').value = '';
+  setTimePickerValue('tp-due', '');
+
+  setModalRecurringState('rule');
+  setRecurringDays(rule.days || []);
+  document.getElementById('recurring-end').value = rule.endDate || '';
 
   modal.classList.add('active');
   setTimeout(() => document.getElementById('task-name').focus(), 100);
@@ -370,8 +453,17 @@ function saveTask() {
   const due = document.getElementById('task-due').value;
   if (!name) { alert('제목을 입력하세요.'); return; }
 
-  const tasks = loadTasks();
   const id = document.getElementById('task-id').value;
+  const ruleId = document.getElementById('rule-id').value;
+  const recurringDays = getSelectedRecurringDays();
+
+  // 반복 규칙 저장: 규칙 수정 모드이거나, 신규 생성에서 반복 요일을 선택한 경우
+  if (ruleId || (!id && recurringDays.length > 0)) {
+    saveRecurringFromModal(ruleId, recurringDays, name);
+    return;
+  }
+
+  const tasks = loadTasks();
 
   const cat1 = document.getElementById('task-category1').value.trim();
   const cat2 = document.getElementById('task-category2').value.trim();
@@ -405,13 +497,69 @@ function saveTask() {
   renderAll();
 }
 
+// 모달 내용으로 반복 규칙 생성·수정. 수정 시 오늘 이후 미완료 인스턴스를 새 규칙으로 재생성한다.
+function saveRecurringFromModal(ruleId, days, name) {
+  if (days.length === 0) { alert('반복 요일을 선택하세요.'); return; }
+  const startDate = document.getElementById('task-scheduled').value || todayStr();
+  const endDate = document.getElementById('recurring-end').value || '';
+  if (endDate && endDate < startDate) { alert('반복 종료일은 시작일보다 뒤여야 합니다.'); return; }
+
+  const cat1 = document.getElementById('task-category1').value.trim();
+  const cat2 = document.getElementById('task-category2').value.trim();
+  const cat3 = document.getElementById('task-category3').value.trim();
+
+  const prev = ruleId ? loadRecurringRules().find(r => r.id === ruleId) : null;
+  const rule = {
+    id: ruleId || generateId(),
+    name,
+    description: document.getElementById('task-desc').value.trim(),
+    priority: document.getElementById('task-priority').value,
+    duration: getDurationValue(),
+    category1: cat1,
+    category2: cat2,
+    category3: cat3,
+    time: getTimePickerValue('tp-scheduled'),
+    days,
+    startDate,
+    endDate,
+    exceptions: prev ? (prev.exceptions || []) : [],
+    createdAt: prev ? prev.createdAt : new Date().toISOString(),
+  };
+
+  upsertRecurringRule(rule);
+  removeFutureUndoneInstances(rule.id);
+  ensureRecurringDefaultHorizon();
+  updateCategoryMap(cat1, cat2, cat3);
+  closeModal();
+  renderAll();
+}
+
 function deleteTask() {
   const id = document.getElementById('task-id').value;
-  if (!id) return;
-  if (!confirm('이 Task를 삭제하시겠습니까?')) return;
+  const ruleId = document.getElementById('rule-id').value;
 
-  const tasks = loadTasks().filter(t => t.id !== id);
-  saveTasks(tasks);
+  // 반복 규칙 수정 모드에서의 삭제 = 규칙 자체 삭제
+  if (!id && ruleId) {
+    const rule = loadRecurringRules().find(r => r.id === ruleId);
+    if (!rule) return;
+    if (!confirm('반복 일정 "' + rule.name + '"을(를) 삭제하시겠습니까?\n오늘 이후의 완료되지 않은 항목이 함께 삭제됩니다. (지난 기록은 보존)')) return;
+    deleteRecurringRule(ruleId);
+    closeModal();
+    renderAll();
+    return;
+  }
+
+  if (!id) return;
+  const tasks = loadTasks();
+  const task = tasks.find(t => t.id === id);
+  const isInstance = task && task.recurringId;
+  const msg = isInstance
+    ? '반복 일정의 이 날짜 항목만 삭제됩니다. (반복 규칙은 유지)\n삭제하시겠습니까?'
+    : '이 Task를 삭제하시겠습니까?';
+  if (!confirm(msg)) return;
+  if (isInstance) addRecurringException(task.recurringId, task.recurringDate);
+
+  saveTasks(tasks.filter(t => t.id !== id));
   selectedIds.delete(id);
   closeModal();
   renderAll();

@@ -109,6 +109,7 @@
 
     <div class="calendar-fold-controls">
       <button class="btn btn-ghost btn-sm" id="btn-fold-all" onclick="toggleFoldAllExceptThisWeek()">이번 주 제외 모두 접기</button>
+      <button class="btn btn-ghost btn-sm" onclick="openRecurringModal()">반복 일정 관리</button>
     </div>
 
     <div class="calendar-with-memo">
@@ -227,6 +228,12 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="task-id">
+      <input type="hidden" id="rule-id">
+      <!-- 반복 인스턴스 안내 (개별 항목 수정 시) -->
+      <div class="recurring-instance-note" id="recurring-instance-note" style="display:none">
+        <span>반복 일정의 개별 항목입니다. 여기서의 수정·삭제는 이 날짜에만 적용됩니다.</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(); openRecurringModal();">반복 규칙 관리</button>
+      </div>
       <div class="form-group">
         <label>제목 *</label>
         <input type="text" class="form-control" id="task-name" placeholder="Task 이름을 입력하세요">
@@ -279,7 +286,7 @@
       </div>
       <!-- 배정일이 마감일보다 위에 위치 -->
       <div class="form-group">
-        <label>배정일 (Scheduled)</label>
+        <label id="label-scheduled">배정일 (Scheduled)</label>
         <div class="date-time-group">
           <input type="date" class="form-control" id="task-scheduled">
           <div class="time-picker" id="tp-scheduled">
@@ -292,7 +299,7 @@
         </div>
         <div class="time-optional">시간 지정은 선택사항입니다 (5분 단위)</div>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="due-group">
         <label>마감일 (Due Date)</label>
         <div class="date-time-group">
           <input type="date" class="form-control" id="task-due">
@@ -306,6 +313,32 @@
         </div>
         <div class="time-optional">시간 지정은 선택사항입니다 (5분 단위) / 메모 Task는 마감일 없이 저장 가능</div>
       </div>
+      <!-- 반복 (신규 생성·규칙 수정 시 표시) -->
+      <div class="form-group" id="recurring-group">
+        <label>반복</label>
+        <div class="recurring-row">
+          <div class="recurring-days" id="recurring-days">
+            <label class="day-check"><input type="checkbox" value="1"><span>월</span></label>
+            <label class="day-check"><input type="checkbox" value="2"><span>화</span></label>
+            <label class="day-check"><input type="checkbox" value="3"><span>수</span></label>
+            <label class="day-check"><input type="checkbox" value="4"><span>목</span></label>
+            <label class="day-check"><input type="checkbox" value="5"><span>금</span></label>
+            <label class="day-check"><input type="checkbox" value="6"><span>토</span></label>
+            <label class="day-check"><input type="checkbox" value="0"><span>일</span></label>
+          </div>
+          <div class="recurring-presets">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="setRecurringPreset('weekday')">평일</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="setRecurringPreset('daily')">매일</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="setRecurringPreset('none')">안 함</button>
+          </div>
+        </div>
+        <div class="recurring-end" id="recurring-end-row" style="display:none">
+          <span class="recurring-end-label">반복 종료일</span>
+          <input type="date" class="form-control" id="recurring-end" style="width:auto">
+          <span class="time-optional" style="margin-top:0">비워 두면 계속 반복</span>
+        </div>
+        <div class="time-optional" id="recurring-hint" style="display:none">배정일부터 선택한 요일마다 자동 생성됩니다. 마감일은 각 날짜로 자동 설정됩니다.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <div class="modal-footer-left">
@@ -315,6 +348,26 @@
         <button class="btn btn-success" id="btn-toggle-done" style="display:none" onclick="toggleDoneFromModal()">완료</button>
         <button class="btn btn-ghost" onclick="closeModal()">취소</button>
         <button class="btn btn-primary" onclick="saveTask()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recurring Rules Modal -->
+<div class="modal-overlay" id="recurring-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>반복 일정 관리</h2>
+      <button class="modal-close" onclick="closeRecurringModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="recurring-rule-list"></div>
+      <div class="time-optional" style="margin-top:10px">새 반복 일정은 '+ 새 Task'에서 반복 요일을 선택해 만듭니다. 규칙 수정·삭제는 오늘 이후의 완료되지 않은 항목에만 적용됩니다(지난 기록·완료 항목 보존).</div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-left"></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeRecurringModal()">닫기</button>
       </div>
     </div>
   </div>
@@ -334,6 +387,7 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/recurring.js"></script>
 <script src="js/ics.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/dashboard.js"></script>

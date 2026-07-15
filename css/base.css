@@ -353,3 +353,56 @@ textarea.form-control { resize: vertical; min-height: 60px; }
   .memo-panel { width: 100%; max-height: 300px; }
   .realtime-status-grid { flex-direction: column; gap: 8px; }
 }
+
+/* ─── 반복 일정 ─── */
+.recurring-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.recurring-days { display: flex; gap: 4px; flex-wrap: wrap; }
+.day-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 7px;
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+}
+.day-check:has(input:checked) { background: #d1fae5; border-color: var(--primary); }
+.day-check input { cursor: pointer; accent-color: var(--primary); }
+.recurring-presets { display: flex; gap: 4px; }
+.recurring-end { display: none; align-items: center; gap: 8px; margin-top: 8px; }
+.recurring-end-label { font-size: 13px; font-weight: 600; }
+.recurring-instance-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.recurring-instance-note .btn { flex-shrink: 0; }
+
+/* 반복 일정 관리 모달 목록 */
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.rule-priority { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+.rule-info { flex: 1; min-width: 0; }
+.rule-name { font-size: 14px; font-weight: 600; }
+.rule-meta { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+.rule-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.rule-empty { text-align: center; color: var(--text-light); font-size: 13px; padding: 20px 0; }

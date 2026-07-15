@@ -1,7 +1,8 @@
 // ─── Backup / Restore / Reset ───
 function exportBackup() {
-  const tasks = loadTasks();
-  const data = JSON.stringify(tasks, null, 2);
+  // v2 형식: 반복 규칙 포함. 구버전(배열) 백업도 importBackup에서 계속 지원.
+  const payload = { version: 2, tasks: loadTasks(), recurringRules: loadRecurringRules() };
+  const data = JSON.stringify(payload, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -21,14 +22,24 @@ function importBackup(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!Array.isArray(data)) {
+      let tasks = null;
+      let rules = [];
+      if (Array.isArray(data)) {
+        tasks = data; // 구버전 백업 (Task 배열만)
+      } else if (data && Array.isArray(data.tasks)) {
+        tasks = data.tasks;
+        rules = Array.isArray(data.recurringRules) ? data.recurringRules : [];
+      }
+      if (!tasks) {
         alert('올바른 백업 파일이 아닙니다.');
         return;
       }
       if (!confirm('현재 데이터를 백업 파일의 데이터로 교체하시겠습니까?\n(기존 데이터는 사라집니다)')) return;
-      saveTasks(data);
+      saveTasks(tasks);
+      saveRecurringRules(rules);
+      ensureRecurringDefaultHorizon();
       renderAll();
-      alert('데이터를 불러왔습니다. (' + data.length + '개 Task)');
+      alert('데이터를 불러왔습니다. (Task ' + tasks.length + '개, 반복 규칙 ' + rules.length + '개)');
     } catch {
       alert('파일을 읽는 중 오류가 발생했습니다. JSON 형식의 백업 파일을 선택해주세요.');
     }
@@ -39,14 +50,16 @@ function importBackup(event) {
 
 function resetAll() {
   const tasks = loadTasks();
-  if (tasks.length === 0) {
+  const rules = loadRecurringRules();
+  if (tasks.length === 0 && rules.length === 0) {
     alert('초기화할 데이터가 없습니다.');
     return;
   }
-  if (!confirm('모든 Task 데이터(' + tasks.length + '개)를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  if (!confirm('모든 Task 데이터(' + tasks.length + '개)와 반복 규칙(' + rules.length + '개)을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
   if (!confirm('정말 초기화하시겠습니까? 백업을 먼저 해두는 것을 권장합니다.')) return;
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(CATEGORY_MAP_KEY);
+  localStorage.removeItem(RECURRING_KEY);
   selectedIds.clear();
   updateBatchBar();
   renderAll();
@@ -55,7 +68,8 @@ function resetAll() {
 
 // ─── Auto-Schedule Algorithm ───
 function autoSchedule() {
-  let tasks = loadTasks().filter(t => !t.done);
+  // 반복 일정 인스턴스는 고정된 약속이므로 자동 배치가 옮기지 않는다
+  let tasks = loadTasks().filter(t => !t.done && !t.recurringId);
   if (tasks.length === 0) { alert('배치할 Task가 없습니다.'); return; }
 
   tasks.sort((a, b) => {
@@ -70,6 +84,13 @@ function autoSchedule() {
   const today = new Date();
   const MAX_HOURS_PER_DAY = 8;
   const dayLoads = {};
+
+  // 반복 인스턴스가 차지하는 시간만큼 하루 용량에서 미리 차감
+  for (const t of loadTasks()) {
+    if (t.recurringId && !t.done && t.scheduledDate) {
+      dayLoads[t.scheduledDate] = (dayLoads[t.scheduledDate] || 0) + (t.duration || 1);
+    }
+  }
 
   function addDays(date, n) {
     const d = new Date(date);
@@ -141,6 +162,7 @@ function renderAll() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeModal();
+    closeRecurringModal();
     closeChartPopup();
   }
 
@@ -208,6 +230,9 @@ function renderWeeklySummary() {
   const endStr = toLocalDateStr(end);
 
   titleEl.textContent = startStr + ' (' + getDayName(start) + ') ~ ' + endStr + ' (' + getDayName(end) + ')';
+
+  // 보이는 주의 반복 인스턴스 보충 생성 (과거·미래 주 이동 시)
+  ensureRecurringInstances(startStr, endStr);
 
   const tasks = loadTasks();
 
@@ -338,5 +363,6 @@ function copyWeeklySummary() {
 initTimePickers();
 initDurationPicker();
 initLunchSettings();
+ensureRecurringDefaultHorizon();
 renderAll();
 startRealtimeUpdates();

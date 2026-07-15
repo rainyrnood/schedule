@@ -112,6 +112,8 @@ function renderCalendar() {
       const task = tasks.find(t => t.id === info.event.id);
       if (task) {
         task.scheduledDate = toLocalDateStr(info.event.start);
+        // 반복 인스턴스는 마감일도 함께 이동 (마감 마커가 원래 날짜에 남지 않도록)
+        if (task.recurringId) task.dueDate = task.scheduledDate;
         saveTasks(tasks);
         renderDashboard();
         renderAllTasks();
@@ -191,8 +193,14 @@ function renderCalendar() {
       }
     },
     // 월 뷰 렌더링 완료 후 모든 주에 접기 버튼 추가
-    datesSet() {
+    datesSet(arg) {
       setTimeout(() => { addWeekFoldButtons(); updateFoldAllButtonText(); }, 50);
+      // 보이는 범위의 반복 인스턴스 보충 생성 (새로 생긴 게 있을 때만 한 번 다시 그림)
+      const rangeStart = toLocalDateStr(arg.start);
+      const rangeEnd = toLocalDateStr(new Date(arg.end.getTime() - 86400000)); // arg.end는 미포함
+      if (ensureRecurringInstances(rangeStart, rangeEnd) > 0) {
+        setTimeout(() => renderCalendar(), 0);
+      }
     },
   });
 
