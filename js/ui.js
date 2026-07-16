@@ -315,22 +315,34 @@ document.querySelectorAll('#recurring-days input').forEach(cb => {
 });
 
 // 모달의 반복 관련 요소 상태 설정
-// mode: 'new'(요일 선택 가능) | 'task'(숨김) | 'instance'(안내 표시) | 'rule'(요일 선택 + 마감일 숨김)
+// mode: 'new'(요일 선택 가능) | 'task'(숨김) | 'instance'(안내 + 적용 범위) | 'rule'(요일 선택 + 마감일 숨김)
 function setModalRecurringState(mode) {
   const group = document.getElementById('recurring-group');
   const note = document.getElementById('recurring-instance-note');
   const dueGroup = document.getElementById('due-group');
   const schedLabel = document.getElementById('label-scheduled');
+  const scopeGroup = document.getElementById('apply-scope-group');
+  const btnDelete = document.getElementById('btn-delete');
+  const btnDeleteAll = document.getElementById('btn-delete-all');
 
   group.style.display = (mode === 'new' || mode === 'rule') ? '' : 'none';
   note.style.display = mode === 'instance' ? 'flex' : 'none';
   dueGroup.style.display = mode === 'rule' ? 'none' : '';
   schedLabel.textContent = mode === 'rule' ? '반복 시작일' : '배정일 (Scheduled)';
+  scopeGroup.style.display = mode === 'instance' ? '' : 'none';
+  if (mode === 'instance') document.querySelector('input[name="apply-scope"][value="one"]').checked = true;
+  btnDeleteAll.style.display = (mode === 'instance' || mode === 'rule') ? 'inline-flex' : 'none';
+  btnDelete.textContent = mode === 'instance' ? '이 날짜 삭제' : '삭제';
   if (mode === 'new') {
     setRecurringDays([]);
     document.getElementById('recurring-end').value = '';
   }
   if (mode !== 'rule') document.getElementById('rule-id').value = '';
+}
+
+function getApplyScope() {
+  const sel = document.querySelector('input[name="apply-scope"]:checked');
+  return sel ? sel.value : 'one';
 }
 
 // ─── Modal ───
@@ -404,7 +416,7 @@ function openRuleModal(ruleId) {
   const modal = document.getElementById('task-modal');
 
   document.getElementById('modal-title').textContent = '반복 일정 수정';
-  document.getElementById('btn-delete').style.display = 'inline-flex';
+  document.getElementById('btn-delete').style.display = 'none';
   document.getElementById('btn-toggle-done').style.display = 'none';
   refreshCategoryDatalists();
 
@@ -485,7 +497,21 @@ function saveTask() {
 
   if (id) {
     const idx = tasks.findIndex(t => t.id === id);
-    if (idx >= 0) Object.assign(tasks[idx], data);
+    if (idx >= 0) {
+      const original = tasks[idx];
+      // 반복 인스턴스에서 "모든 반복" 선택 시: 이번에 바뀐 항목만 골라 전체에 전파
+      let changed = null;
+      if (original.recurringId && getApplyScope() === 'all') {
+        changed = {};
+        const fields = ['name', 'description', 'priority', 'duration', 'category1', 'category2', 'category3', 'scheduledTime'];
+        for (const f of fields) {
+          const before = f === 'duration' ? (original[f] || 1) : (original[f] || '');
+          if (data[f] !== before) changed[f] = data[f];
+        }
+      }
+      Object.assign(tasks[idx], data);
+      if (changed) propagateRecurringChanges(tasks, original.recurringId, changed);
+    }
   } else {
     tasks.push({ id: generateId(), ...data, done: false, order: tasks.length, createdAt: new Date().toISOString() });
   }
@@ -536,19 +562,6 @@ function saveRecurringFromModal(ruleId, days, name) {
 
 function deleteTask() {
   const id = document.getElementById('task-id').value;
-  const ruleId = document.getElementById('rule-id').value;
-
-  // 반복 규칙 수정 모드에서의 삭제 = 규칙 자체 삭제
-  if (!id && ruleId) {
-    const rule = loadRecurringRules().find(r => r.id === ruleId);
-    if (!rule) return;
-    if (!confirm('반복 일정 "' + rule.name + '"을(를) 삭제하시겠습니까?\n오늘 이후의 완료되지 않은 항목이 함께 삭제됩니다. (지난 기록은 보존)')) return;
-    deleteRecurringRule(ruleId);
-    closeModal();
-    renderAll();
-    return;
-  }
-
   if (!id) return;
   const tasks = loadTasks();
   const task = tasks.find(t => t.id === id);
@@ -561,6 +574,24 @@ function deleteTask() {
 
   saveTasks(tasks.filter(t => t.id !== id));
   selectedIds.delete(id);
+  closeModal();
+  renderAll();
+}
+
+// 반복 전체 삭제: 규칙 수정 모드(rule-id) 또는 인스턴스 수정 모드(task-id)에서 호출
+function deleteAllRecurring() {
+  let ruleId = document.getElementById('rule-id').value;
+  if (!ruleId) {
+    const id = document.getElementById('task-id').value;
+    const t = loadTasks().find(x => x.id === id);
+    ruleId = t && t.recurringId;
+  }
+  if (!ruleId) return;
+  const rule = loadRecurringRules().find(r => r.id === ruleId);
+  const name = rule ? rule.name : '반복 일정';
+  const undoneCount = loadTasks().filter(t => t.recurringId === ruleId && !t.done).length;
+  if (!confirm('반복 일정 "' + name + '" 전체를 삭제하시겠습니까?\n완료하지 않은 항목 ' + undoneCount + '개가 모두 삭제되고 다시 생성되지 않습니다. (완료한 항목은 기록으로 보존)')) return;
+  deleteRecurringRuleAll(ruleId);
   closeModal();
   renderAll();
 }

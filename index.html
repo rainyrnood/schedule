@@ -231,7 +231,7 @@
       <input type="hidden" id="rule-id">
       <!-- 반복 인스턴스 안내 (개별 항목 수정 시) -->
       <div class="recurring-instance-note" id="recurring-instance-note" style="display:none">
-        <span>반복 일정의 개별 항목입니다. 여기서의 수정·삭제는 이 날짜에만 적용됩니다.</span>
+        <span>반복 일정의 개별 항목입니다. 아래 '적용 범위'에서 전체 반영 여부를 선택할 수 있습니다. 요일 변경은 반복 규칙 관리에서 하십시오.</span>
         <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal(); openRecurringModal();">반복 규칙 관리</button>
       </div>
       <div class="form-group">
@@ -339,10 +339,20 @@
         </div>
         <div class="time-optional" id="recurring-hint" style="display:none">배정일부터 선택한 요일마다 자동 생성됩니다. 마감일은 각 날짜로 자동 설정됩니다.</div>
       </div>
+      <!-- 적용 범위 (반복 인스턴스 수정 시) -->
+      <div class="form-group" id="apply-scope-group" style="display:none">
+        <label>적용 범위</label>
+        <div class="apply-scope-options">
+          <label class="scope-check"><input type="radio" name="apply-scope" value="one" checked><span>이 날짜만</span></label>
+          <label class="scope-check"><input type="radio" name="apply-scope" value="all"><span>모든 반복 (완료 항목 제외)</span></label>
+        </div>
+        <div class="time-optional">"모든 반복"은 이번에 바꾼 항목만 전체 반복 일정과 규칙에 반영합니다. 날짜 이동은 항상 이 날짜에만 적용됩니다.</div>
+      </div>
     </div>
     <div class="modal-footer">
       <div class="modal-footer-left">
         <button class="btn btn-danger" id="btn-delete" style="display:none" onclick="deleteTask()">삭제</button>
+        <button class="btn btn-danger" id="btn-delete-all" style="display:none" onclick="deleteAllRecurring()">반복 전체 삭제</button>
       </div>
       <div class="modal-footer-right">
         <button class="btn btn-success" id="btn-toggle-done" style="display:none" onclick="toggleDoneFromModal()">완료</button>
@@ -362,7 +372,7 @@
     </div>
     <div class="modal-body">
       <div id="recurring-rule-list"></div>
-      <div class="time-optional" style="margin-top:10px">새 반복 일정은 '+ 새 Task'에서 반복 요일을 선택해 만듭니다. 규칙 수정·삭제는 오늘 이후의 완료되지 않은 항목에만 적용됩니다(지난 기록·완료 항목 보존).</div>
+      <div class="time-optional" style="margin-top:10px">새 반복 일정은 '+ 새 Task'에서 반복 요일을 선택해 만듭니다. 규칙 수정은 오늘 이후의 미완료 항목에 반영되고, 삭제는 미완료 항목 전체를 한 번에 제거합니다(완료한 항목은 기록으로 보존).</div>
     </div>
     <div class="modal-footer">
       <div class="modal-footer-left"></div>

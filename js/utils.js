@@ -19,18 +19,19 @@ function priorityWeight(p) {
   return { high: 3, medium: 2, low: 1, none: 0 }[p] || 0;
 }
 
+// 낮음은 하늘색 — 완료 회색·성공 초록·테마 에메랄드와 구분되도록 초록 계열 사용 금지
 function priorityColor(p) {
-  return { high: '#f87171', medium: '#fdba74', low: '#10b981', none: '#cbd5e1' }[p] || '#94a3b8';
+  return { high: '#f87171', medium: '#fdba74', low: '#38bdf8', none: '#cbd5e1' }[p] || '#94a3b8';
 }
 
-// 칩 배경 위에 올라가는 글씨 색 (밝은 배경인 보통·없음은 진한 글씨로 가독성 확보)
+// 칩 배경 위에 올라가는 글씨 색 (밝은 배경인 보통·낮음·없음은 진한 글씨로 가독성 확보)
 function priorityTextColor(p) {
-  return { high: '#ffffff', medium: '#7c2d12', low: '#ffffff', none: '#334155' }[p] || '#ffffff';
+  return { high: '#ffffff', medium: '#7c2d12', low: '#0c4a6e', none: '#334155' }[p] || '#ffffff';
 }
 
 // 마감 마커(외곽선·투명 배경) — 흰 셀 위에서도 읽히도록 진한 색 사용
 function priorityMarkerColor(p) {
-  return { high: '#dc2626', medium: '#b45309', low: '#047857', none: '#475569' }[p] || '#475569';
+  return { high: '#dc2626', medium: '#b45309', low: '#0369a1', none: '#475569' }[p] || '#475569';
 }
 
 // ─── Decimal Formatting (최대 소수점 둘째자리) ───

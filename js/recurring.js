@@ -111,9 +111,29 @@ function removeFutureUndoneInstances(ruleId) {
   saveTasks(tasks);
 }
 
-function deleteRecurringRule(ruleId) {
-  removeFutureUndoneInstances(ruleId);
+// 반복 전체 삭제: 규칙과 미완료 인스턴스 전부(과거·미래) 제거. 완료 항목은 기록으로 보존.
+function deleteRecurringRuleAll(ruleId) {
+  saveTasks(loadTasks().filter(t => !(t.recurringId === ruleId && !t.done)));
   saveRecurringRules(loadRecurringRules().filter(r => r.id !== ruleId));
+}
+
+// "모든 반복" 수정: 이번에 바뀐 항목(changed)만 미완료 인스턴스 전체와 규칙에 반영.
+// tasks 배열을 직접 수정하며 저장은 호출자(saveTask)가 담당. 규칙은 여기서 저장.
+function propagateRecurringChanges(tasks, ruleId, changed) {
+  const keys = Object.keys(changed);
+  if (keys.length === 0) return;
+  for (const t of tasks) {
+    if (t.recurringId === ruleId && !t.done) Object.assign(t, changed);
+  }
+  const rules = loadRecurringRules();
+  const rule = rules.find(r => r.id === ruleId);
+  if (rule) {
+    for (const k of keys) {
+      if (k === 'scheduledTime') rule.time = changed[k];
+      else rule[k] = changed[k];
+    }
+    saveRecurringRules(rules);
+  }
 }
 
 // 개별 인스턴스 삭제 시 해당 발생일을 예외로 기록해 재생성을 막는다.
@@ -174,8 +194,9 @@ function editRecurringRule(ruleId) {
 function removeRecurringRuleFromList(ruleId) {
   const rule = loadRecurringRules().find(r => r.id === ruleId);
   if (!rule) return;
-  if (!confirm('반복 일정 "' + rule.name + '"을(를) 삭제하시겠습니까?\n오늘 이후의 완료되지 않은 항목이 함께 삭제됩니다. (지난 기록은 보존)')) return;
-  deleteRecurringRule(ruleId);
+  const undoneCount = loadTasks().filter(t => t.recurringId === ruleId && !t.done).length;
+  if (!confirm('반복 일정 "' + rule.name + '" 전체를 삭제하시겠습니까?\n완료하지 않은 항목 ' + undoneCount + '개가 모두 삭제되고 다시 생성되지 않습니다. (완료한 항목은 기록으로 보존)')) return;
+  deleteRecurringRuleAll(ruleId);
   renderRecurringRuleList();
   renderAll();
 }
