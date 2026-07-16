@@ -19,9 +19,9 @@ function priorityWeight(p) {
   return { high: 3, medium: 2, low: 1, none: 0 }[p] || 0;
 }
 
-// 낮음은 하늘색 — 완료 회색·성공 초록·테마 에메랄드와 구분되도록 초록 계열 사용 금지
+// 낮음은 아주 연한 하늘색 — 완료 회색·성공 초록·테마 에메랄드와 구분되도록 초록 계열 사용 금지
 function priorityColor(p) {
-  return { high: '#f87171', medium: '#fdba74', low: '#38bdf8', none: '#cbd5e1' }[p] || '#94a3b8';
+  return { high: '#f87171', medium: '#fdba74', low: '#bae6fd', none: '#cbd5e1' }[p] || '#94a3b8';
 }
 
 // 칩 배경 위에 올라가는 글씨 색 (밝은 배경인 보통·낮음·없음은 진한 글씨로 가독성 확보)

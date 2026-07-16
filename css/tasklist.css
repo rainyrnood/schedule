@@ -39,7 +39,7 @@
 }
 .priority-high { background: #f87171; }
 .priority-medium { background: #fdba74; }
-.priority-low { background: #38bdf8; }
+.priority-low { background: #bae6fd; }
 .priority-none { background: #e2e8f0; border: 1px solid #cbd5e1; }
 
 .task-info { flex: 1; min-width: 0; }
